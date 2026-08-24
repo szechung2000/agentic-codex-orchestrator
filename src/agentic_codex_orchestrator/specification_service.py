@@ -72,6 +72,7 @@ class SpecificationService:
                     now,
                 ),
             )
+            self.store.set_run_state(connection, run_id, RunState.SPECIFICATION_PENDING)
             event = Event(
                 event_id=str(uuid4()),
                 run_id=run_id,
@@ -152,4 +153,3 @@ class SpecificationService:
             raise ApprovalRequiredError(
                 "Dispatch requires explicit approval of the current specification version"
             )
-
