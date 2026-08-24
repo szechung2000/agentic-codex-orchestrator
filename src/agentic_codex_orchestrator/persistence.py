@@ -52,6 +52,18 @@ CREATE TABLE IF NOT EXISTS approvals (
     approved_at TEXT NOT NULL,
     UNIQUE(run_id, specification_id, approved_by)
 );
+
+CREATE TABLE IF NOT EXISTS workers (
+    worker_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES runs(run_id),
+    specification_version INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    worktree_path TEXT NOT NULL,
+    branch_name TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    result_json TEXT
+);
 """
 
 
@@ -145,6 +157,18 @@ class SQLiteStore:
         )
         if cursor.rowcount != 1:
             raise KeyError(f"Unknown run: {run_id}")
+
+    def get_worker(self, worker_id: str) -> dict | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM workers WHERE worker_id = ?", (worker_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        value = dict(row)
+        if value["result_json"]:
+            value["result"] = json.loads(value.pop("result_json"))
+        return value
 
 
 class JSONLAuditLog:
