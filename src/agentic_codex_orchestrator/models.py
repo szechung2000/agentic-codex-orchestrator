@@ -46,23 +46,3 @@ class Event:
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
-
-@dataclass(frozen=True, slots=True)
-class Specification:
-    specification_id: str
-    run_id: str
-    version: int
-    content: dict[str, Any]
-    content_sha256: str
-    created_by: str
-    created_at: str
-
-
-@dataclass(frozen=True, slots=True)
-class Approval:
-    approval_id: str
-    run_id: str
-    specification_id: str
-    specification_version: int
-    approved_by: str
-    approved_at: str
