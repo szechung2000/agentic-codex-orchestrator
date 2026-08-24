@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-codex-orchestrator"
+version = "0.1.0"
+description = "A deterministic supervisor for isolated Codex workers"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp>=2,<3"]
+
+[project.scripts]
+aco-mcp = "agentic_codex_orchestrator.mcp_server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
