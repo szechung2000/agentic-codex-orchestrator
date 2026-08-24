@@ -31,39 +31,6 @@ CREATE TABLE IF NOT EXISTS events (
     payload_json TEXT NOT NULL,
     UNIQUE(run_id, sequence)
 );
-
-CREATE TABLE IF NOT EXISTS specifications (
-    specification_id TEXT PRIMARY KEY,
-    run_id TEXT NOT NULL REFERENCES runs(run_id),
-    version INTEGER NOT NULL,
-    content_json TEXT NOT NULL,
-    content_sha256 TEXT NOT NULL,
-    created_by TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    UNIQUE(run_id, version)
-);
-
-CREATE TABLE IF NOT EXISTS approvals (
-    approval_id TEXT PRIMARY KEY,
-    run_id TEXT NOT NULL REFERENCES runs(run_id),
-    specification_id TEXT NOT NULL REFERENCES specifications(specification_id),
-    specification_version INTEGER NOT NULL,
-    approved_by TEXT NOT NULL,
-    approved_at TEXT NOT NULL,
-    UNIQUE(run_id, specification_id, approved_by)
-);
-
-CREATE TABLE IF NOT EXISTS workers (
-    worker_id TEXT PRIMARY KEY,
-    run_id TEXT NOT NULL REFERENCES runs(run_id),
-    specification_version INTEGER NOT NULL,
-    status TEXT NOT NULL,
-    worktree_path TEXT NOT NULL,
-    branch_name TEXT NOT NULL,
-    started_at TEXT NOT NULL,
-    completed_at TEXT,
-    result_json TEXT
-);
 """
 
 
@@ -151,25 +118,6 @@ class SQLiteStore:
             for row in rows
         ]
 
-    def set_run_state(self, connection: sqlite3.Connection, run_id: str, state: RunState) -> None:
-        cursor = connection.execute(
-            "UPDATE runs SET state = ? WHERE run_id = ?", (state.value, run_id)
-        )
-        if cursor.rowcount != 1:
-            raise KeyError(f"Unknown run: {run_id}")
-
-    def get_worker(self, worker_id: str) -> dict | None:
-        with self.connect() as connection:
-            row = connection.execute(
-                "SELECT * FROM workers WHERE worker_id = ?", (worker_id,)
-            ).fetchone()
-        if row is None:
-            return None
-        value = dict(row)
-        if value["result_json"]:
-            value["result"] = json.loads(value.pop("result_json"))
-        return value
-
 
 class JSONLAuditLog:
     """Append-only event mirror; event IDs make reconciliation idempotent."""
@@ -184,3 +132,4 @@ class JSONLAuditLog:
         with self._lock, self.path.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
             handle.flush()
+
